@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Documentos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Gerador de Documentos</h1>
+    <form id="form">
+        <label for="empresa">Empresa:</label>
+        <input type="text" id="empresa" required>
+
+        <label for="nota">Nota Fiscal:</label>
+        <input type="text" id="nota" required>
+
+        <label for="ordem">Ordem de C/S:</label>
+        <input type="text" id="ordem" required>
+
+        <label for="data">Faturamento Mês/Ano:</label>
+        <input type="text" id="data" required>
+
+        <label for="modelo">Selecione o Modelo:</label>
+        <input type="file" id="modelo" accept=".docx" required>
+
+        <label for="zip">Arquivo ZIP (Imagens):</label>
+        <input type="file" id="zip" accept=".zip" required>
+
+        <button type="submit">Gerar Documento</button>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/docx@7.1.1/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
