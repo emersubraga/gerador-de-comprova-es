@@ -1,4 +1,4 @@
-async function gerarDocumento(modeloArrayBuffer, empresa, nota, ordem, data, imagens) {
+async function gerarDocumento(modeloArrayBuffer, empresa, nota, ordem, data, imagens) { 
     const { Document, Packer, Paragraph, TextRun, ImageRun } = docx;
 
     const doc = new Document({
@@ -7,10 +7,10 @@ async function gerarDocumento(modeloArrayBuffer, empresa, nota, ordem, data, ima
             children: [
                 new Paragraph({
                     children: [
-                        new TextRun({ text: `Empresa: ${empresa}`),
-                        new TextRun(`\nNota Fiscal: ${nota}`),
-                        new TextRun(`\nOrdem de C/S: ${ordem}`),
-                        new TextRun(`\nFaturamento Mês/Ano: ${data}`)
+                        new TextRun({ text: `Empresa: ${empresa}` }),
+                        new TextRun({ text: `\nNota Fiscal: ${nota}` }),
+                        new TextRun({ text: `\nOrdem de C/S: ${ordem}` }),
+                        new TextRun({ text: `\nFaturamento Mês/Ano: ${data}` })
                     ]
                 }),
                 ...imagens.map(imgSrc => new Paragraph({
@@ -22,7 +22,6 @@ async function gerarDocumento(modeloArrayBuffer, empresa, nota, ordem, data, ima
             ]
         }]
     });
-
 
     // Gerar e baixar o arquivo
     const blob = await Packer.toBlob(doc);
