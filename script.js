@@ -13,6 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        if (typeof window.Mammoth === "undefined") {
+            console.error("Mammoth.js não foi carregado corretamente.");
+            alert("Erro ao carregar Mammoth.js. Verifique sua conexão ou tente novamente.");
+            return;
+        }
+
         // Ler o arquivo `.docx`
         const reader = new FileReader();
         reader.readAsArrayBuffer(modeloFile);
