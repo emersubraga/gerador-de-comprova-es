@@ -17,36 +17,57 @@ document.addEventListener("DOMContentLoaded", () => {
         const reader = new FileReader();
         reader.readAsArrayBuffer(modeloFile);
 
-        reader.onload = function(event) {
-            try {
-                const content = event.target.result;
+        reader.onload = async function(event) {
+            const content = event.target.result;
 
-                // Carregar o template `.docx`
-                const zip = new PizZip(content);
-                const doc = new window.docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+            // Converter `.docx` para texto mantendo a formatação
+            const extractedText = await extractTextFromDocx(content);
 
-                // Substituir variáveis no documento
-                doc.render({
-                    empresa: empresa,
-                    nota: nota,
-                    ordem: ordem,
-                    data: data
-                });
+            // Substituir as variáveis no texto extraído
+            const finalText = extractedText
+                .replace(/{{empresa}}/g, empresa)
+                .replace(/{{nota}}/g, nota)
+                .replace(/{{ordem}}/g, ordem)
+                .replace(/{{data}}/g, data);
 
-                // Gerar novo `.docx`
-                const blob = doc.getZip().generate({ type: "blob" });
-
-                // Criar link para download
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "documento_gerado.docx";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (error) {
-                console.error("Erro ao processar o documento:", error);
-                alert("Erro ao gerar documento. Verifique se o modelo está correto e tente novamente.");
-            }
+            // Criar um novo `.docx` com o texto atualizado
+            gerarNovoDocx(finalText);
         };
     });
 });
+
+// Função para extrair o texto do `.docx` mantendo formatação básica
+async function extractTextFromDocx(arrayBuffer) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsBinaryString(new Blob([arrayBuffer]));
+
+        reader.onload = function(event) {
+            const binaryString = event.target.result;
+            Mammoth.convertToHtml({ arrayBuffer }).then((result) => {
+                resolve(result.value);
+            }).catch(reject);
+        };
+    });
+}
+
+// Função para gerar um novo `.docx` mantendo a formatação
+function gerarNovoDocx(textoAtualizado) {
+    const { Document, Packer, Paragraph, TextRun } = docx;
+
+    const doc = new Document({
+        sections: [{
+            properties: {},
+            children: [new Paragraph({ children: [new TextRun(textoAtualizado)] })]
+        }]
+    });
+
+    Packer.toBlob(doc).then(blob => {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "documento_gerado.docx";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+}
