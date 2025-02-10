@@ -18,32 +18,35 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.readAsArrayBuffer(modeloFile);
 
         reader.onload = function(event) {
-            const content = event.target.result;
+            try {
+                const content = event.target.result;
 
-            // Carregar o template `.docx`
-            const zip = new PizZip(content);
-            const doc = new window.docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+                // Carregar o template `.docx`
+                const zip = new PizZip(content);
+                const doc = new window.docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
-            // Substituir variáveis no documento
-            doc.render({
-                empresa: empresa,
-                nota: nota,
-                ordem: ordem,
-                data: data
-            });
+                // Substituir variáveis no documento
+                doc.render({
+                    empresa: empresa,
+                    nota: nota,
+                    ordem: ordem,
+                    data: data
+                });
 
-            // Gerar novo `.docx`
-            const blob = doc.getZip().generate({ type: "blob" });
+                // Gerar novo `.docx`
+                const blob = doc.getZip().generate({ type: "blob" });
 
-            // Criar link para download
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "documento_gerado.docx";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                // Criar link para download
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "documento_gerado.docx";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error("Erro ao processar o documento:", error);
+                alert("Erro ao gerar documento. Verifique se o modelo está correto e tente novamente.");
+            }
         };
     });
 });
-
-
