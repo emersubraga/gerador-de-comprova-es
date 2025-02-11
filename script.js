@@ -1,79 +1,80 @@
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("form").addEventListener("submit", async (event) => {
-        event.preventDefault();
+        event.preventDefault(); // ✅ Impede o reload da página
+
+        console.log("Iniciando geração do documento..."); // ✅ Debug
 
         const empresa = document.getElementById("empresa").value.toUpperCase();
         const nota = document.getElementById("nota").value.toUpperCase();
         const ordem = document.getElementById("ordem").value.toUpperCase();
         const data = document.getElementById("data").value.toUpperCase();
         const modeloFile = document.getElementById("modelo").files[0];
+        const zipFile = document.getElementById("zip").files[0];
 
-        if (!modeloFile) {
-            alert("Por favor, selecione um modelo de documento.");
+        if (!modeloFile || !zipFile) {
+            alert("Por favor, selecione um modelo e um arquivo ZIP.");
             return;
         }
 
-        if (typeof window.Mammoth === "undefined") {
-            console.error("Mammoth.js não foi carregado corretamente.");
-            alert("Erro ao carregar Mammoth.js. Verifique sua conexão ou tente novamente.");
-            return;
+        console.log("Arquivo modelo e ZIP selecionados."); // ✅ Debug
+
+        const modeloArrayBuffer = await modeloFile.arrayBuffer();
+        const zip = await JSZip.loadAsync(zipFile);
+        const imagens = [];
+
+        for (const fileName of Object.keys(zip.files)) {
+            if (/\.(png|jpg|jpeg)$/i.test(fileName)) {
+                const imgData = await zip.files[fileName].async("base64");
+                imagens.push(`data:image/png;base64,${imgData}`);
+            }
         }
 
-        // Ler o arquivo `.docx`
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(modeloFile);
+        console.log("Imagens extraídas do ZIP:", imagens.length); // ✅ Debug
 
-        reader.onload = async function(event) {
-            const content = event.target.result;
-
-            // Converter `.docx` para texto mantendo a formatação
-            const extractedText = await extractTextFromDocx(content);
-
-            // Substituir as variáveis no texto extraído
-            const finalText = extractedText
-                .replace(/{{empresa}}/g, empresa)
-                .replace(/{{nota}}/g, nota)
-                .replace(/{{ordem}}/g, ordem)
-                .replace(/{{data}}/g, data);
-
-            // Criar um novo `.docx` com o texto atualizado
-            gerarNovoDocx(finalText);
-        };
+        gerarDocumento(modeloArrayBuffer, empresa, nota, ordem, data, imagens);
     });
 });
 
-// Função para extrair o texto do `.docx` mantendo formatação básica
-async function extractTextFromDocx(arrayBuffer) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsBinaryString(new Blob([arrayBuffer]));
+async function gerarDocumento(modeloArrayBuffer, empresa, nota, ordem, data, imagens) { 
+    console.log("Gerando documento..."); // ✅ Debug
 
-        reader.onload = function(event) {
-            const binaryString = event.target.result;
-            Mammoth.convertToHtml({ arrayBuffer }).then((result) => {
-                resolve(result.value);
-            }).catch(reject);
-        };
-    });
-}
-
-// Função para gerar um novo `.docx` mantendo a formatação
-function gerarNovoDocx(textoAtualizado) {
-    const { Document, Packer, Paragraph, TextRun } = docx;
+    const { Document, Packer, Paragraph, TextRun, ImageRun } = docx;
 
     const doc = new Document({
         sections: [{
             properties: {},
-            children: [new Paragraph({ children: [new TextRun(textoAtualizado)] })]
+            children: [
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: `Empresa: ${empresa}` }),
+                        new TextRun({ text: `\nNota Fiscal: ${nota}` }),
+                        new TextRun({ text: `\nOrdem de C/S: ${ordem}` }),
+                        new TextRun({ text: `\nFaturamento Mês/Ano: ${data}` })
+                    ]
+                }),
+                ...imagens.map(imgSrc => new Paragraph({
+                    children: [new ImageRun({
+                        data: imgSrc,
+                        transformation: { width: 400, height: 200 }
+                    })]
+                }))
+            ]
         }]
     });
 
-    Packer.toBlob(doc).then(blob => {
+    console.log("Documento criado, preparando para download..."); // ✅ Debug
+
+    try {
+        const blob = await Packer.toBlob(doc);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = "documento_gerado.docx";
-        document.body.appendChild(link);
+        document.body.appendChild(link); // ✅ Adiciona temporariamente ao DOM
         link.click();
-        document.body.removeChild(link);
-    });
+        document.body.removeChild(link); // ✅ Remove o link após o clique
+
+        console.log("Download iniciado."); // ✅ Debug
+    } catch (error) {
+        console.error("Erro ao gerar documento:", error);
+    }
 }
