@@ -1,3 +1,25 @@
+async function carregarMammoth() {
+    if (typeof Mammoth === "undefined") {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js";
+            script.onload = () => {
+                console.log("Mammoth.js carregado!");
+                resolve();
+            };
+            script.onerror = () => reject(new Error("Erro ao carregar Mammoth.js"));
+            document.head.appendChild(script);
+        });
+    }
+}
+
+await carregarMammoth(); // Garante que Mammoth está carregado antes de ser usado
+
+// Agora podemos usar Mammoth com segurança
+const result = await Mammoth.extractRawText({ arrayBuffer });
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("form").addEventListener("submit", async (event) => {
         event.preventDefault();
