@@ -13,8 +13,6 @@ async function carregarMammoth() {
     }
 }
 
-// Agora podemos usar Mammoth com segurança
-const result = await Mammoth.extractRawText({ arrayBuffer });
 
 
 
