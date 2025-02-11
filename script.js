@@ -13,8 +13,6 @@ async function carregarMammoth() {
     }
 }
 
-await carregarMammoth(); // Garante que Mammoth está carregado antes de ser usado
-
 // Agora podemos usar Mammoth com segurança
 const result = await Mammoth.extractRawText({ arrayBuffer });
 
