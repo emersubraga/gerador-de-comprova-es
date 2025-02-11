@@ -30,9 +30,14 @@
         
         .input-container {
             text-align: center;
-            margin-top: 100px;
         }
-
+        
+        .card {
+            width: 90%;
+            max-width: 500px;
+            background-color: #040404;
+        }
+        
         label{
             position: relative;
             display: block;
@@ -47,7 +52,7 @@
             color: #f9f9f9;
             background: transparent;
             padding: 1rem 3.2rem 1rem 1.2rem;
-            min-width: 35rem;
+            min-width: 100%;
             border-radius: 0.2rem;
             border: 2px solid #7a7a7a56;
             transition: border-color 0.2s;
@@ -81,12 +86,6 @@
             color:#7a7a7a56
         }
 
-        .linha{
-            display: flex;
-            flex-direction: row;
-            margin: 10px;
-        }
-        
         .file-input {
             display: flex;
             flex-direction: column;
@@ -115,7 +114,7 @@
     <div class="container input-container" id="input-container">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card shadow mb-4" style="background-color: #040404;">
+                <div class="card shadow mb-4">
                     <div class="card-body">
                         <h1 style="color: #f9f9f9;">Gerador de Documentos</h1>
                         <form id="form">
@@ -138,17 +137,15 @@
                                 <input type="text" id="data" required placeholder=" ">
                                 <p>Faturamento Mês/Ano</p>
                             </label>
+
+                            <div class="file-input">
+                                <label for="modelo">Selecione o Modelo (.docx):</label>
+                                <input type="file" id="modelo" accept=".docx" required>
+                            </div>
                             
-                            <div class="linha">
-                                <div class="file-input">
-                                    <label for="modelo">Selecione o Modelo (.docx):</label>
-                                    <input type="file" id="modelo" accept=".docx" required>
-                                </div>
-                                
-                                <div class="file-input">
-                                    <label for="zip">Arquivo ZIP (Imagens):</label>
-                                    <input type="file" id="zip" accept=".zip" required>
-                                </div>
+                            <div class="file-input">
+                                <label for="zip">Arquivo ZIP (Imagens):</label>
+                                <input type="file" id="zip" accept=".zip" required>
                             </div>
 
                             <button class="btn btn-outline-info my-2 my-sm-0" type="submit">Gerar Documento</button>
