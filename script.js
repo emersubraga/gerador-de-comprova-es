@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const imagens = [];
 
         for (const fileName of Object.keys(zip.files)) {
-            if (/(.png|.jpg|.jpeg)$/i.test(fileName)) {
+            if (/\.(png|jpg|jpeg)$/i.test(fileName)) {
                 const imgData = await zip.files[fileName].async("uint8array");
                 imagens.push(imgData);
             }
@@ -30,37 +30,73 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function gerarDocumento(modeloArrayBuffer, empresa, nota, ordem, data, imagens) {
-    const doc = await new docx.DocumentLoader(modeloArrayBuffer).load();
+    // Converter ArrayBuffer para Blob para usar com Mammoth.js
+    const modeloBlob = new Blob([modeloArrayBuffer], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
 
-    const paragraphs = doc.getParagraphs();
-    for (const paragraph of paragraphs) {
-        let text = paragraph.getText();
-        text = text.replace("{{empresa}}", empresa)
-                   .replace("{{nota}}", nota)
-                   .replace("{{ordem}}", ordem)
-                   .replace("{{data}}", data);
-        paragraph.replaceText(text);
-    }
+    // Usando Mammoth.js para extrair o texto do modelo .docx
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(modeloBlob);
+    reader.onload = async (event) => {
+        const arrayBuffer = event.target.result;
+        const result = await Mammoth.extractRawText({ arrayBuffer });
 
-    let imageCounter = 0;
+        // Substituir placeholders no texto extraído
+        let textoFormatado = result.value
+            .replace("{{empresa}}", empresa)
+            .replace("{{nota}}", nota)
+            .replace("{{ordem}}", ordem)
+            .replace("{{data}}", data);
+
+        // Criar um novo documento com docx.js
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, ImageRun } = docx;
+        const doc = new Document({
+            sections: [{
+                properties: {},
+                children: [
+                    new Paragraph({ children: [new TextRun(textoFormatado)] }),
+                    ...criarTabelaImagens(imagens)
+                ]
+            }]
+        });
+
+        // Gerar e baixar o novo documento
+        const blob = await Packer.toBlob(doc);
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "documento_gerado.docx";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+}
+
+// Função para criar uma tabela de 2x2 com 4 imagens por página
+function criarTabelaImagens(imagens) {
+    const { Table, TableRow, TableCell, ImageRun } = docx;
+    const tabelas = [];
     for (let i = 0; i < imagens.length; i += 4) {
         const imageGroup = imagens.slice(i, i + 4);
-        const table = new docx.Table({ rows: 2, columns: 2 });
-        imageGroup.forEach((img, index) => {
-            table.getCell(Math.floor(index / 2), index % 2).addContent(
-                new docx.ImageRun({ data: img, transformation: { width: 200, height: 150 } })
-            );
-        });
-        doc.addSection({ children: [table] });
-        imageCounter++;
+        const rows = [];
+        for (let j = 0; j < 2; j++) {
+            const cells = [];
+            for (let k = 0; k < 2; k++) {
+                const index = j * 2 + k;
+                if (index < imageGroup.length) {
+                    cells.push(new TableCell({
+                        children: [new Paragraph({ children: [new ImageRun({
+                            data: imageGroup[index],
+                            transformation: { width: 200, height: 150 }
+                        })] })]
+                    }));
+                } else {
+                    cells.push(new TableCell({ children: [] }));
+                }
+            }
+            rows.push(new TableRow({ children: cells }));
+        }
+        tabelas.push(new Table({ rows }));
     }
-
-    const blob = await docx.Packer.toBlob(doc);
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "documento_gerado.docx";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    return tabelas;
 }
+
 
